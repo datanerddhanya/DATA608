@@ -1,0 +1,138 @@
+---
+title: "DATA608 - Story 2"
+author: "Dhanya Nair"
+date: "2024-09-18"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## 0. Question
+The Federal Reserve's mandate from Congress is to control inflation and to maintain low unemployment. These seem to be contradictory objectives.
+
+"Has the FED been able to fulfill the mandate given to it by Congress?"
+
+## 1. Data Sources
+
+25 years of the FED Funds Rate (FRED) is downloaded  from this site:
+
+https://fred.stlouisfed.org/series/FEDFUNDS#
+
+25 years of Unemployment Rate is downloaded from the BLS((Bureau of Labor Statistics) website: https://data.bls.gov/dataViewer/view/timeseries/LNS14000000;jsessionid=14C493AC1A161DF40CC8A797A0810D7C
+
+
+25 years of Consumer Price Index (CPI) is downloaded from BLS((Bureau of Labor Statistics) website: https://data.bls.gov/pdq/SurveyOutputServlet
+
+## 2. Introduction
+
+### Effective federal funds rate 
+
+The federal funds rate is the interest rate at which depository institutions trade federal funds (balances held at Federal Reserve Banks) with each other overnight. When a depository institution has surplus balances in its reserve account, it lends to other banks in need of larger balances. In simpler terms, a bank with excess cash, which is often referred to as liquidity, will lend to another bank that needs to quickly raise liquidity.  The rate that the borrowing institution pays to the lending institution is determined between the two banks; the weighted average rate for all of these types of negotiations is called the effective federal funds rate.The effective federal funds rate is essentially determined by the market but is influenced by the Federal Reserve through open market operations to reach the federal funds rate target.
+
+### Unemployment Rate 
+The unemployment rate is the percentage of people in the labor force who are unemployed and actively looking for work. The Bureau of Labor Statistics (BLS) calculates the unemployment rate by dividing the number of unemployed people by the total number of people in the labor force.
+
+
+### Consumer Price Index (CPI)
+The CPI represents changes in prices of all goods and services purchased for consumption by urban households. User fees (such as water and sewer service) and sales and excise taxes paid by the consumer are also included. Income taxes and investment items (like stocks, bonds, and life insurance) are not included.
+
+## 3. Visualizations
+```{r cars}
+
+#Data loading
+fed_funds <-read.csv("https://raw.githubusercontent.com/datanerddhanya/DATA608/refs/heads/main/FEDFUNDS.csv")
+
+unemployment_rate <- read.csv("https://raw.githubusercontent.com/datanerddhanya/DATA608/refs/heads/main/Unemployment_rate.csv")  
+
+cpi <- read.csv("https://raw.githubusercontent.com/datanerddhanya/DATA608/refs/heads/main/CPI_ALL%20ITEMS.csv")
+
+# Data enrichment
+fed_funds$DATE <- as.Date(fed_funds$DATE)
+unemployment_rate$Value <- as.numeric(unemployment_rate$Value)
+unemployment_rate$Date <- as.Date(unemployment_rate$Date)
+cpi$Inflation <- as.numeric(cpi$Inflation)
+cpi$Date <- as.Date(cpi$Date)
+
+# Function to create yearly x-axis labels
+create_yearly_x_axis <- function(x,n=1) {
+  years <- as.numeric(format(x, "%Y"))
+  unique_years <- unique(years)
+  labeled_years <- unique_years[seq(1, length(unique_years), by = n)]
+  axis(1, at = as.Date(paste0(labeled_years, "-01-01")), labels = labeled_years, las = 1)
+}
+
+# Plotting
+par(mfrow=c(3,1), mar=c(4,4,2,1))  # Set up 3 plots in one column
+
+# Create a line plot for the FED Funds Rate
+plot(fed_funds, 
+     main = "FED Funds Rate", 
+     type = "l",              # "l" for lines
+     col = "blue",            # Line color
+     xlab = "Year",           # x-axis label
+     ylab = " FED Funds Rate",           # y-axis label
+    xaxt = "n"  # do not use this axis
+        )
+create_yearly_x_axis(fed_funds$DATE,5)
+
+# Create a line plot for the Unemployment Rate
+plot(unemployment_rate$Date,          # x-axis: year
+     unemployment_rate$Value,          # y-axis: rate
+     main = "Unemployment Rate", 
+     type = "l",              # "l" for lines
+     col = "red",            # Line color
+     xlab = "Year",           # x-axis label
+     ylab = "Unemployment Rate",           # y-axis label
+     xaxt = "n"   
+     )
+create_yearly_x_axis(unemployment_rate$Date,5)
+
+# Create a line plot for the CPI/ Inflation Rate
+plot(cpi$Date,          # x-axis: year
+     cpi$Inflation,          # y-axis: rate
+     main = "Consumer Price Index (CPI) based Inflation Rate", 
+     type = "l",              # "l" for lines
+     col = "green",            # Line color
+     xlab = "Year",           # x-axis label
+     ylab = " Inflation Rate",           # y-axis label
+     xaxt = "n"   # Control x-axis ticks: (start, end, number of intervals)
+        )
+create_yearly_x_axis(cpi$Date,5)
+
+
+# Reset plot parameters
+par(mfrow=c(1,1))
+
+```
+```{r}
+# Combine the datasets by date
+merged_data <- merge(fed_funds, unemployment_rate, by.x = "DATE", by.y = "Date")
+
+# Create the scatter plot
+plot(merged_data$FEDFUNDS, merged_data$Value,
+     main = "Correlation: Fed Funds Rate vs Unemployment rate",
+     xlab = "Fed Funds Rate (%)",
+     ylab = "Unemployment Rate (%)",
+     pch = 19,  # Use filled circles for points
+     col = "blue")
+# Add a trend line
+abline(lm(Value ~ FEDFUNDS, data = merged_data), col = "red")
+
+# Add a grid for better readability
+grid()
+
+```
+
+## 4. Summary:
+
+I sourced the data from FRED stlouisfed and BLS((Bureau of Labor Statistics), downloaded to csv files, formatted and prepared the data for visualization.
+The Federal reserve has done a good job keeping inflation under control. Based on the graph, Inflation rate over time has been steady.
+The Federal reserve has been maintaining a low unemployment rate over time . It only spiked in 2020 due to global pandemic and in 2009 after Financial recession.
+They start to decrease FED Funds rate once unemployment rate increases( seen in year 2009 and 2020) and increase FED funds rate when unemployment decreases(year 2024).
+The correlation chart similarly shows the same.
+Hence yes , FED been able to fulfill the mandate given to it by Congress.
+
